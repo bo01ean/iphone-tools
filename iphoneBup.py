@@ -5,7 +5,34 @@ import re
 import os
 import shutil
 
+
+
+
+"""
+
+This script parses the Manifest.mbdb file which later versions of IOS use to store backup information
+
+It recursively scans for Manifest files,  searches images and extracts them into folder called photos
+
+Run this script in:
+OS X:
+~/Library/Application Support/MobileSync/Backup
+Windows:
+%AppData%\Apple Computer\MobileSync\Backup\
+
+
+This script uses code originally by galloglass on stackoverflow 
+User Robert Munafo posted an updated version:
+http://stackoverflow.com/questions/3085153/how-to-parse-the-manifest-mbdb-file-in-an-ios-4-0-itunes-backup
+
+
+"""
+
+
 mbdx = {}
+outputDir = "photos"
+
+
 
 def getint(data, offset, intsize):
     """Retrieve an integer (big-endian) and new offset from the current offset"""
@@ -96,7 +123,8 @@ def runIt( file ):
 			fileinfo['fileID'] = mbdx[offset]
 			if re.match(ur"Media", fileinfo['domain']) and re.match(ur"[^THM]", fileinfo['filename']):
 				print "Media!" + " " + fileinfo['filename'] + " " + fileinfo['fileID']# path
-				target =  os.path.join( os.getcwd(), "photos")
+				
+				target =  os.path.join( os.getcwd(), outputDir)
 				for p in fileinfo['filename'].split("/"):
 					target = os.path.join( target, p  )					
 				print target
@@ -125,11 +153,29 @@ def runIt( file ):
 	
 
 if __name__ == '__main__':
-	#os.chdir("test")
+
+
+
 	top = os.getcwd();
+	
+	
+	
+	try:
+		os.stat( outputDir )
+	except:
+		os.makedirs( outputDir )
+	
+	
+	
+	
 	for root, subFolders, files in os.walk( "." ):
 		for ff in files:
-			if re.match(ur"((?!shot).)*$", root):  #ignore snaps directories
+			if re.match(ur"((?!shot).)*$", root):  #ignore snapshot directories
 				if re.match(ur"^Manifest\.mbdb$", ff):
 					runIt(os.path.join(root, ff))
 					print "^-^" + root + "\\" + ff
+					
+					
+					
+					
+					

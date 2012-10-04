@@ -6,13 +6,23 @@ import sys
 import fnmatch
 import shutil
 
+"""
+	This script will look for important backup files in your iphone backup directory. It will copy the largest of those files into a directory
 
-from collections import defaultdict
+
+"""
+
 
 files = []
 candidates = {}
 tmp = ""
 reg = ""
+
+outputDir = "tmp"
+
+
+
+
 
 dict ="""SMS / Text messages	1-6	sms.db	3d0d7e5fb2ce288813306e4d4636395e047a3d28	SQLite 3
 Contacts / address book	2-6	AddressBook.sqlitedb	31bb7ba8914766d4ba40d6dfb6113c8b614be442	SQLite 3
@@ -26,22 +36,8 @@ adsfasdf b03b6432c8e753323429e15bc9ec0a8040763424 lkjsdf iPhoto backup
 photos, SMS, call log and contacts
 """
 
-
-"""
-class AutoVivification(dict):
-    #Implementation of perl's autovivification feature.
-    def __getitem__(self, item):
-        try:
-            return dict.__getitem__(self, item)
-        except KeyError:
-            value = self[item] = type(self)()
-            return value
-"""
-
-
-
 def getFileNames():
-  data = re.findall( ur'''[0-9a-f]{40}''', dict )
+  data = re.findall( ur'''[0-9a-f]{40}''', dict )# get SHA1 signatures
   print dict
   return data
 
@@ -92,7 +88,6 @@ def recurse( path ):
   
 if __name__ == '__main__':  
 	hashNames = getFileNames()
-	# attempt to create REGEX object
 	tmp = "ur(" + "|".join(hashNames) + ")"
 	reg  = re.compile(tmp)
 
@@ -104,9 +99,15 @@ if __name__ == '__main__':
 	recurse(".")
 	
 	
+	try:
+		os.stat( ".//" + outputDir + "//" )
+	except:
+		os.makedirs( ".//" + outputDir + "//" )
+			
+	
 	for key, value in candidates.iteritems():
 		print candidates[key]['path']
-		shutil.copyfile( candidates[key]['path'], ".//tmp//" +  key  )
+		shutil.copyfile( candidates[key]['path'], ".//" + outputDir + "//" +  key  )
 
 		
 	
