@@ -9,6 +9,7 @@ import shutil
 """
 	This script will look for important backup files in your iphone backup directory. It will copy the largest of those files into a directory
 
+	safeMode flag makes no changes to the filesystem, only flip to True if you are completely sure
 
 """
 
@@ -19,7 +20,7 @@ tmp = ""
 reg = ""
 
 outputDir = "tmp"
-
+safeMode = True
 
 
 
@@ -107,7 +108,9 @@ if __name__ == '__main__':
 	
 	for key, value in candidates.iteritems():
 		print candidates[key]['path']
-		shutil.copyfile( candidates[key]['path'], ".//" + outputDir + "//" +  key  )
+		
+		if not safeMode
+			shutil.copyfile( candidates[key]['path'], ".//" + outputDir + "//" +  key  )
 
 		
 	

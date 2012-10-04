@@ -3,6 +3,7 @@ import sys
 import hashlib
 import re
 import os
+import platform
 import shutil
 
 
@@ -12,7 +13,7 @@ import shutil
 
 This script parses the Manifest.mbdb file which later versions of IOS use to store backup information
 
-It recursively scans for Manifest files,  searches images and extracts them into folder called photos
+It recursively scans for Manifest files,  searches for media and extracts them into folder called media
 
 Run this script in:
 OS X:
@@ -26,12 +27,26 @@ User Robert Munafo posted an updated version:
 http://stackoverflow.com/questions/3085153/how-to-parse-the-manifest-mbdb-file-in-an-ios-4-0-itunes-backup
 
 
+safeMode flag makes no changes to the filesystem, only flip to True if you are completely sure!
+
 """
 
 
 mbdx = {}
-outputDir = "photos"
+outputDir = "Extracted"
+safeMode = False
 
+
+#http://stackoverflow.com/questions/626796/how-do-i-find-the-windows-common-application-data-folder-using-python
+try:
+    from win32com.shell import shellcon, shell            
+    homedir = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0)
+
+except ImportError: # quick semi-nasty fallback for non-windows/win32com case
+    homedir = os.path.expanduser("~")
+
+workingDir = {"Darwin":"~/Library/Application Support/MobileSync/Backup", "Windows":homedir + "\\Apple Computer\\MobileSync\\Backup\\" }
+sizes = {}
 
 
 def getint(data, offset, intsize):
@@ -115,13 +130,21 @@ def fileinfo_str(f, verbose=False):
         info = info + ' ' + name + '=' + repr(value)
     return info
 	
+	
+	
+	
+	
+	
+	
+	
+	
 def runIt( file ):
 
 	mbdb = process_mbdb_file( file )
 	for offset, fileinfo in mbdb.items():
 		if offset in mbdx:
 			fileinfo['fileID'] = mbdx[offset]
-			if re.match(ur"Media", fileinfo['domain']) and re.match(ur"[^THM]", fileinfo['filename']):
+			if re.match(ur".*", fileinfo['domain']) and fileinfo['filelen'] > 1024 *1024:# and re.match(ur"[^THM]", fileinfo['filename']):
 				print "Media!" + " " + fileinfo['filename'] + " " + fileinfo['fileID']# path
 				
 				target =  os.path.join( os.getcwd(), outputDir)
@@ -130,52 +153,70 @@ def runIt( file ):
 				print target
 				DIR =  os.path.split( target )[0]
 				
-				try:
-					os.stat( DIR )
-				except:
-					os.makedirs( DIR )
-					
-				src =  os.path.join(DIR,fileinfo['fileID']) 
 				
-				try:
-					os.stat( src  )
-				except:
+				if not safeMode:
 					try:
-						os.stat( target )
+						os.stat( DIR )
 					except:
+						os.makedirs( DIR )
+					
+					
+					
+					
+					
+					src =  os.path.join( os.path.split( file )[0] , fileinfo['fileID'] ) 
+					
+					
+					print src + " -> " +  target
+				
+				
+				
+					try:
+						with open( src ) as s: pass
 						shutil.copyfile( src,  target )
-
+					except IOError as e:
+						print "		->		Oh dear..." + src + " no exist!"
+				
 		else:
 			fileinfo['fileID'] = "<nofileID>"
 			print >> sys.stderr, "No fileID found for %s" % fileinfo_str(fileinfo)
-			print fileinfo_str(fileinfo,True)
+		
+		
+		if (fileinfo['mode'] & 0xE000) == 0x8000:
+			sizes[fileinfo['domain']] = sizes.get(fileinfo['domain'],0) + fileinfo['filelen']
+
 			
-	
+
+    	
+        
+        
+        	
 
 if __name__ == '__main__':
+	
+	# change to iTunes backup directory	
+	os.chdir(os.path.expanduser(workingDir[ platform.system() ]))
 
-
-
+	
+	if not safeMode:
+		try:
+			os.stat( outputDir )
+		except:
+			os.makedirs( outputDir )
+		
 	top = os.getcwd();
-	
-	
-	
-	try:
-		os.stat( outputDir )
-	except:
-		os.makedirs( outputDir )
-	
-	
-	
+
 	
 	for root, subFolders, files in os.walk( "." ):
 		for ff in files:
 			if re.match(ur"((?!shot).)*$", root):  #ignore snapshot directories
 				if re.match(ur"^Manifest\.mbdb$", ff):
-					runIt(os.path.join(root, ff))
 					print "^-^" + root + "\\" + ff
+					runIt(os.path.join(root, ff))
 					
 					
 					
+	for domain in sorted(sizes, key=sizes.get):
+		print "%-60s %11d (%dMB)" % (domain, sizes[domain], int(sizes[domain]/1024/1024))
 					
 					
