@@ -27,16 +27,14 @@ User Robert Munafo posted an updated version:
 http://stackoverflow.com/questions/3085153/how-to-parse-the-manifest-mbdb-file-in-an-ios-4-0-itunes-backup
 
 
-safeMode flag makes no changes to the filesystem, only flip to True if you are completely sure!
+safeMode flag makes no changes to the filesystem, only flip to False if you are completely sure!
 
 """
 
 
-mbdx = {}
 outputDir = "Extracted"
 safeMode = False
-IPhoneImageDigestBank = {}
-
+IPhoneImageDigestBank = {}mbdx = {}
 
 
 
@@ -226,7 +224,10 @@ def backupFromDatabase( file ):
 		if offset in mbdx:
 			fileinfo['fileID'] = mbdx[offset]
 			
-			if re.match(ur".*", fileinfo['domain']) and fileinfo['filelen'] > 0:# and re.match(ur"[^THM]", fileinfo['filename']):				
+
+			
+			if re.match(ur"^[^A][p][p]", fileinfo['domain']) and fileinfo['filelen'] > 0:# and re.match(ur"[^THM]", fileinfo['filename']):				
+				print fileinfo['domain']
 				backupFileCopy( fileinfo['fileID'], fileinfo['filename'], file )				
 				
 						
@@ -248,7 +249,12 @@ def backupFromDatabase( file ):
 
 def backupFileCopy(hash, name, file, dumpDir=outputDir):
 
+
+	#print "I have: " + file
+	#ABSOLUTE MODE
 	dest =  os.path.join( os.getcwd(), dumpDir)
+	#RELATIVE
+	#dest = "./" + dumpDir
 	
 	for p in name.split("/"):
 		dest = os.path.join( dest, p  )					
@@ -256,31 +262,34 @@ def backupFileCopy(hash, name, file, dumpDir=outputDir):
 	DIR =  os.path.split( dest )[0]
 
 	#print "DIR = " + DIR
-
+	#print "dest = " + dest
+	
 	if not safeMode:
 		try:
+			#print DIR + "?????"
 			os.stat( DIR )
 		except:
+			#print "Making recurse: " + DIR
 			os.makedirs( DIR )
 			
 		src =  os.path.join( os.path.split( file )[0], hash ) 
 		#print src + " -> " +  dest
 		
 		
-		print "Does " + src + " exist? " + str(os.path.exists( src ))
+		#print "Does " + src + " exist? " + str(os.path.exists( src ))
 		
 		if( os.path.exists( src ) ):						
 			if( os.path.exists( dest ) ):
 				if( os.path.getsize( src ) > os.path.getsize( dest ) ):
 					print ">>> src > dest so copying " + dest
 					shutil.copyfile( src,  dest )
-				else:
-					print ">>> same file..."		
+				#else:
+				#	print ">>> same file..."		
 			else:
 				print ">>> dest doesn't exist, so copying " + src + "->" + dest 	
 				shutil.copyfile( src,  dest )
-		else:
-			print ">>> src doesn't exist :("
+		#else:
+		#	print ">>> src doesn't exist :("
 
 
 
@@ -303,11 +312,11 @@ def buildIPhoneImageDigestBank():
 	i = 0
    
    
-	for camInc in range(camStart, 103):
+	for camInc in range(camStart, 105):
 		#print camInc
 		i+=1
 		for imgInc in range( ( ( i * 1000 ) - 1000 ), 1000 * i ):   
-			print str( camInc ) + "->" + str( imgInc )
+			#print str( camInc ) + "->" + str( imgInc )
 			for t in types:
 				fullpath = path + "{0:03d}".format(camInc) + "APPLE" + "/IMG_" + "{0:04d}".format(imgInc) + "." + t
 				
@@ -316,13 +325,11 @@ def buildIPhoneImageDigestBank():
   	 			hash = hashlib.sha1( encryptMe )
 				IPhoneImageDigestBank[hash.hexdigest()] = fullpath;
 
-
-
 """
 	We scan through hashes and copy to file system if necessary
 """
 def extractMediaFromSpoofedHashes( dir ):
-	print "Extracting using hash names from " + dir
+	print "Extracting via hash names from " + dir
 	for hash, path in IPhoneImageDigestBank.items():
 		if( os.path.exists( dir + "//" + hash ) ):
 			backupFileCopy(hash, path, dir + "//pizza", "Extract-test" )
@@ -363,6 +370,8 @@ if __name__ == '__main__':
 		except:
 			os.makedirs( outputDir )
 	
+	top = os.getcwd();
+	
 	for root, subFolders, files in os.walk( "." ):
 		for ff in files:
 			if re.match(ur"((?!shot).)*$", root):  #ignore snapshot directories
@@ -370,6 +379,7 @@ if __name__ == '__main__':
 					print "^-^" + root + "\\" + ff
 					backupFromDatabase(os.path.join(root, ff))
 		if re.match(ur"((?!Extract).)*$", root ) and root != ".":# we don't check our extracted folder, or current folder
+			print root
 			extractMediaFromSpoofedHashes( root )	
 
 					
