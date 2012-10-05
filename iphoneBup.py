@@ -35,7 +35,16 @@ safeMode flag makes no changes to the filesystem, only flip to True if you are c
 mbdx = {}
 outputDir = "Extracted"
 safeMode = False
+IPhoneImageDigestBank = {}
 
+
+
+
+
+
+"""
+	We try to determine home directory -> backup location
+"""
 
 #http://stackoverflow.com/questions/626796/how-do-i-find-the-windows-common-application-data-folder-using-python
 try:
@@ -45,8 +54,23 @@ try:
 except ImportError: # quick semi-nasty fallback for non-windows/win32com case
     homedir = os.path.expanduser("~")
 
-workingDir = {"Darwin":"~/Library/Application Support/MobileSync/Backup", "Windows":homedir + "\\Apple Computer\\MobileSync\\Backup\\" }
+workingDir = {"DDarwin":"/Volumes/KELUSB-2012/iTunes Backups","Darwin":"~/Library/Application Support/MobileSync/Backup", "Windows":homedir + "\\Apple Computer\\MobileSync\\Backup\\" }
 sizes = {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def getint(data, offset, intsize):
@@ -57,7 +81,6 @@ def getint(data, offset, intsize):
         offset = offset + 1
         intsize = intsize - 1
     return value, offset
-
 def getstring(data, offset):
     """Retrieve a string and new offset from the current offset into the data"""
     if data[offset] == chr(0xFF) and data[offset+1] == chr(0xFF):
@@ -65,7 +88,6 @@ def getstring(data, offset):
     length, offset = getint(data, offset, 2) # 2-byte length
     value = data[offset:offset+length]
     return value, (offset + length)
-
 def process_mbdb_file(filename):
     mbdb = {} # Map offset of info in this file => file info
     data = open(filename, "rb").read()
@@ -100,8 +122,37 @@ def process_mbdb_file(filename):
         fullpath = fileinfo['domain'] + '-' + fileinfo['filename']
         id = hashlib.sha1(fullpath)
         mbdx[fileinfo['start_offset']] = id.hexdigest()
-		
+
     return mbdb
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def modestr(val):
     def mode(val):
@@ -138,85 +189,193 @@ def fileinfo_str(f, verbose=False):
 	
 	
 	
-def runIt( file ):
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+def backupFromDatabase( file ):
 
 	mbdb = process_mbdb_file( file )
+	
 	for offset, fileinfo in mbdb.items():
 		if offset in mbdx:
 			fileinfo['fileID'] = mbdx[offset]
-			if re.match(ur".*", fileinfo['domain']) and fileinfo['filelen'] > 1024 *1024:# and re.match(ur"[^THM]", fileinfo['filename']):
-				print "Media!" + " " + fileinfo['filename'] + " " + fileinfo['fileID']# path
+			
+			if re.match(ur".*", fileinfo['domain']) and fileinfo['filelen'] > 0:# and re.match(ur"[^THM]", fileinfo['filename']):				
+				backupFileCopy( fileinfo['fileID'], fileinfo['filename'], file )				
 				
-				target =  os.path.join( os.getcwd(), outputDir)
-				for p in fileinfo['filename'].split("/"):
-					target = os.path.join( target, p  )					
-				print target
-				DIR =  os.path.split( target )[0]
-				
-				
-				if not safeMode:
-					try:
-						os.stat( DIR )
-					except:
-						os.makedirs( DIR )
-					
-					
-					
-					
-					
-					src =  os.path.join( os.path.split( file )[0] , fileinfo['fileID'] ) 
-					
-					
-					print src + " -> " +  target
-				
-				
-				
-					try:
-						with open( src ) as s: pass
-						shutil.copyfile( src,  target )
-					except IOError as e:
-						print "		->		Oh dear..." + src + " no exist!"
-				
+						
 		else:
 			fileinfo['fileID'] = "<nofileID>"
 			print >> sys.stderr, "No fileID found for %s" % fileinfo_str(fileinfo)
 		
 		
-		if (fileinfo['mode'] & 0xE000) == 0x8000:
-			sizes[fileinfo['domain']] = sizes.get(fileinfo['domain'],0) + fileinfo['filelen']
+		if fileinfo['filelen'] > 0:
+			if (fileinfo['mode'] & 0xE000) == 0x8000:
+				sizes[fileinfo['domain']] = sizes.get(fileinfo['domain'],0) + fileinfo['filelen']
 
 			
 
-    	
-        
-        
-        	
+
+
+
+
+
+def backupFileCopy(hash, name, file, dumpDir=outputDir):
+
+	dest =  os.path.join( os.getcwd(), dumpDir)
+	
+	for p in name.split("/"):
+		dest = os.path.join( dest, p  )					
+
+	DIR =  os.path.split( dest )[0]
+
+	#print "DIR = " + DIR
+
+	if not safeMode:
+		try:
+			os.stat( DIR )
+		except:
+			os.makedirs( DIR )
+			
+		src =  os.path.join( os.path.split( file )[0], hash ) 
+		#print src + " -> " +  dest
+		
+		
+		print "Does " + src + " exist? " + str(os.path.exists( src ))
+		
+		if( os.path.exists( src ) ):						
+			if( os.path.exists( dest ) ):
+				if( os.path.getsize( src ) > os.path.getsize( dest ) ):
+					print ">>> src > dest so copying " + dest
+					shutil.copyfile( src,  dest )
+				else:
+					print ">>> same file..."		
+			else:
+				print ">>> dest doesn't exist, so copying " + src + "->" + dest 	
+				shutil.copyfile( src,  dest )
+		else:
+			print ">>> src doesn't exist :("
+
+
+
+
+
+
+
+
+
+"""
+	We spoof media paths
+"""    	
+def buildIPhoneImageDigestBank():
+	# Media/DCIM/100APPLE/IMG_0001.MOV|JPG
+	print "Spoofing .."   
+	path = "Media/DCIM/"
+	camStart = 100;
+	imgInc = 1;
+	types = {"JPG","MOV"}
+	i = 0
+   
+   
+	for camInc in range(camStart, 103):
+		#print camInc
+		i+=1
+		for imgInc in range( ( ( i * 1000 ) - 1000 ), 1000 * i ):   
+			print str( camInc ) + "->" + str( imgInc )
+			for t in types:
+				fullpath = path + "{0:03d}".format(camInc) + "APPLE" + "/IMG_" + "{0:04d}".format(imgInc) + "." + t
+				
+   				encryptMe = "MediaDomain-" + fullpath
+  	 			#print encryptMe
+  	 			hash = hashlib.sha1( encryptMe )
+				IPhoneImageDigestBank[hash.hexdigest()] = fullpath;
+
+
+
+"""
+	We scan through hashes and copy to file system if necessary
+"""
+def extractMediaFromSpoofedHashes( dir ):
+	print "Extracting using hash names from " + dir
+	for hash, path in IPhoneImageDigestBank.items():
+		if( os.path.exists( dir + "//" + hash ) ):
+			backupFileCopy(hash, path, dir + "//pizza", "Extract-test" )
+		if( os.path.exists( dir + "//" + hash + ".mdbackup" ) ):
+			backupFileCopy(hash + ".mdbackup", path, dir + "//pizza", "Extract-test" )		
+		
+	
+	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
+	    	
 
 if __name__ == '__main__':
 	
-	# change to iTunes backup directory	
+	# change to iTunes backup directory, wherever that may be
 	os.chdir(os.path.expanduser(workingDir[ platform.system() ]))
 
-	
+	buildIPhoneImageDigestBank()
+	#exit();   
+		
 	if not safeMode:
 		try:
 			os.stat( outputDir )
 		except:
 			os.makedirs( outputDir )
-		
-	top = os.getcwd();
-
 	
 	for root, subFolders, files in os.walk( "." ):
 		for ff in files:
 			if re.match(ur"((?!shot).)*$", root):  #ignore snapshot directories
 				if re.match(ur"^Manifest\.mbdb$", ff):
 					print "^-^" + root + "\\" + ff
-					runIt(os.path.join(root, ff))
-					
+					backupFromDatabase(os.path.join(root, ff))
+		if re.match(ur"((?!Extract).)*$", root ) and root != ".":# we don't check our extracted folder, or current folder
+			extractMediaFromSpoofedHashes( root )	
+
 					
 					
 	for domain in sorted(sizes, key=sizes.get):
-		print "%-60s %11d (%dMB)" % (domain, sizes[domain], int(sizes[domain]/1024/1024))
+		if( sizes[domain] > 1024 * 1024 ):
+			print "%-60s (%dMB)" % (domain, int(sizes[domain]/1024/1024))
 					
 					
