@@ -22,7 +22,7 @@ Check it out from git, be sure python is in your path, and this script should do
 
 
 
-This script uses code originally by galloglass on stackoverflow 
+This script uses code by galloglass on stackoverflow 
 User Robert Munafo posted an updated version:
 http://stackoverflow.com/questions/3085153/how-to-parse-the-manifest-mbdb-file-in-an-ios-4-0-itunes-backup
 
