@@ -1,4 +1,4 @@
-iPhoneBup - a iPhone backup media extractor written in Python by Nathan Trujillo github.com/bo01ean
+iPhoneBup - a iPhone backup media extractor written in Python by Nathan Trujillo
 
 What it does:
 	This script recursively scans your backup directories,  searches for media and extracts them into folder of the users choosing.
