@@ -155,8 +155,6 @@ def backupFromDatabase( file ):
 			
 def backupFileCopy(hash, name, file, dumpDir=outputDir):
 
-
-	#print "I have: " + file
 	#ABSOLUTE MODE
 	dest =  os.path.join( os.getcwd(), dumpDir)
 	#RELATIVE
@@ -168,21 +166,14 @@ def backupFileCopy(hash, name, file, dumpDir=outputDir):
 	DIR =  os.path.split( dest )[0]
 
 	#print "DIR = " + DIR
-	#print "dest = " + dest
 	
 	if not safeMode:
 		try:
-			#print DIR + "?????"
 			os.stat( DIR )
 		except:
-			#print "Making recurse: " + DIR
 			os.makedirs( DIR )
 			
 		src =  os.path.join( os.path.split( file )[0], hash ) 
-		#print src + " -> " +  dest
-		
-		
-		#print "Does " + src + " exist? " + str(os.path.exists( src ))
 		
 		if( os.path.exists( src ) ):						
 			if( os.path.exists( dest ) ):
@@ -395,6 +386,26 @@ if __name__ == '__main__':
 	for domain in sorted(sizes, key=sizes.get):
 		if( sizes[domain] > 1024 * 1024 ):
 			print "%-60s : (%dMB)" % (domain, int(sizes[domain]/1024/1024))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
