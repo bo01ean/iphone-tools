@@ -37,73 +37,42 @@ import os
 import platform
 import shutil
 
-
-
 """
 User defined variables
 """
-
 
 safeMode = False
 outputDir = "Extracted"
 minSize = 1 * 1024 * 1024# size in k of the smallest file you want to backup
 
-
-
-
-
-
-
-
-
-
-
-
 """
 Do not change anything below this line unless you know what you are doing :)
 """
 
-
-
-
 iPhoneImageDigestBank, mbdx, sizes, extracted = {}, {}, {}, {}
-
-
-
-
-
-
 
 """
 	We try to determine home directory -> backup location
 """
 
-
-
 #http://stackoverflow.com/questions/626796/how-do-i-find-the-windows-common-application-data-folder-using-python
 try:
     from win32com.shell import shellcon, shell            
     homedir = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0)
-	
 except ImportError: # quick semi-nasty fallback for non-windows/win32com case
     homedir = os.path.expanduser("~")
 
-
-
 workingDir = {"DDarwin":"/Volumes/KELUSB-2012/iTunes Backups",
 				"Darwin":"~/Library/Application Support/MobileSync/Backup",
-					"Windows":homedir + "\\AppData\\Roaming\\Apple Computer\\MobileSync\\Backup\\" }
-
-
+				"Windows":homedir + "\\AppData\\Roaming\\Apple Computer\\MobileSync\\Backup\\" }
 
 """
 	We spoof media paths
 """    	
-def buildiPhoneImageDigestBank():
-	# Media/DCIM/100APPLE/IMG_0001.MOV|JPG
-	print "Spoofing .."   
+def buildiPhoneImageDigestBank(): # Media/DCIM/100APPLE/IMG_0001.MOV|JPG
+	print "Spoofing .."
 	path = "Media/DCIM/"
-	camStart = 100;
+	camStart = 100
 	imgInc = 1;
 	types = {"JPG","MOV"}
 	i = 0
@@ -112,16 +81,11 @@ def buildiPhoneImageDigestBank():
 		#print camInc
 		i+=1
 		for imgInc in range( ( ( i * 1000 ) - 1000 ), 1000 * i ):   
-			#print str( camInc ) + "->" + str( imgInc )
 			for t in types:
 				fullpath = path + "{0:03d}".format(camInc) + "APPLE" + "/IMG_" + "{0:04d}".format(imgInc) + "." + t
-				
-   				encryptMe = "MediaDomain-" + fullpath
-  	 			#print encryptMe
-  	 			hash = hashlib.sha1( encryptMe )
+				encryptMe = "MediaDomain-" + fullpath
+				hash = hashlib.sha1( encryptMe )
 				iPhoneImageDigestBank[hash.hexdigest()] = fullpath;
-
-
 
 """
 	We extract files from iPhone backup database
@@ -135,9 +99,8 @@ def backupFromDatabase( file ):
 	for offset, fileinfo in mbdb.items():
 		if offset in mbdx:
 			fileinfo['fileID'] = mbdx[offset]
-			
-			
-			if not re.match(ur"^App", fileinfo['domain'] ) and fileinfo['filelen'] >= minSize and ((fileinfo['mode'] & 0xE000) == 0x8000):# and re.match(ur"[^THM]", fileinfo['filename']):				
+
+			if not re.match(ur"^App", fileinfo['domain'] ) and fileinfo['filelen'] >= minSize and ((fileinfo['mode'] & 0xE000) == 0x8000):
 				#print fileinfo['domain']
 
 				backupFileCopy( fileinfo['fileID'], fileinfo['filename'], file )				
@@ -155,9 +118,7 @@ def backupFromDatabase( file ):
 			
 def backupFileCopy(hash, name, file, dumpDir=outputDir):
 
-	#ABSOLUTE MODE
 	dest =  os.path.join( os.getcwd(), dumpDir)
-	#RELATIVE
 	#dest = "./" + dumpDir
 	
 	for p in name.split("/"):
@@ -165,28 +126,20 @@ def backupFileCopy(hash, name, file, dumpDir=outputDir):
 
 	DIR =  os.path.split( dest )[0]
 
-	#print "DIR = " + DIR
-	
 	if not safeMode:
 		try:
 			os.stat( DIR )
 		except:
 			os.makedirs( DIR )
-			
-		src =  os.path.join( os.path.split( file )[0], hash ) 
-		
+		src =  os.path.join( os.path.split( file )[0], hash )
 		if( os.path.exists( src ) ):						
 			if( os.path.exists( dest ) ):
 				if( os.path.getsize( src ) > os.path.getsize( dest ) ):
 					print ">>> src > dest so copying " + dest
 					shutil.copyfile( src,  dest )
-				#else:
-				#	print ">>> same file..."		
 			else:
 				print ">>> dest doesn't exist, so copying " + src + "->" + dest 	
 				shutil.copyfile( src,  dest )
-		#else:
-		#	print ">>> src doesn't exist :("
 
 
 
@@ -200,28 +153,6 @@ def extractMediaFromSpoofedHashes( dir ):
 			backupFileCopy(hash, path, dir + "//pizza", outputDir + "-viahashes" )
 		if( os.path.exists( dir + "//" + hash + ".mdbackup" ) ):
 			backupFileCopy(hash + ".mdbackup", path, dir + "//pizza", outputDir + "-viahashes" )		
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def getint(data, offset, intsize):
     """Retrieve an integer (big-endian) and new offset from the current offset"""
@@ -303,56 +234,6 @@ def fileinfo_str(f, verbose=False):
     for name, value in f['properties'].items(): # extra properties
         info = info + ' ' + name + '=' + repr(value)
     return info
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
- 	
-	    	
-	    	
-	    	
-	    	
-	    	
-	    	
-	    	
-	    	
-	    	
-	    	
-	    	
-	    	
-	    	
 
 if __name__ == '__main__':
 	
@@ -387,31 +268,6 @@ if __name__ == '__main__':
 		if( sizes[domain] > 1024 * 1024 ):
 			print "%-60s : (%dMB)" % (domain, int(sizes[domain]/1024/1024))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 """
 File notes
 SMS / Text messages	1-6	sms.db	3d0d7e5fb2ce288813306e4d4636395e047a3d28	SQLite 3
@@ -424,5 +280,4 @@ dsfdasf 12b144c0bd44f2b3dffd9186d3f9c05b917cee25  lkjsadflkjasdf iPhoto
 adsfasdf b03b6432c8e753323429e15bc9ec0a8040763424 lkjsdf iPhoto backup
 
 photos, SMS, call log and contacts
-"""					
-					
+"""
